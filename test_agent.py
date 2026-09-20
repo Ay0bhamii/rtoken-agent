@@ -1,13 +1,14 @@
 """Smoke tests: risk gate + fallback interpreter + paper broker (stdlib unittest).
 
-Run from repo root:  python -m rtoken_agent.test_agent
+Run:  python test_agent.py   or   python -m test_agent
 """
 from __future__ import annotations
 import unittest
 
-from . import config, risk
-from .broker import PaperBroker
-from .llm import interpret_event
+import config
+import risk
+from broker import PaperBroker
+from llm import interpret_event
 
 
 class TestRiskGate(unittest.TestCase):

@@ -11,7 +11,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from . import config
+import config
 
 # Demo reference prices (paper fills). Replace with live rToken quotes later.
 REF_PRICES = {

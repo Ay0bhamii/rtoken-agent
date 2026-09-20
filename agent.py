@@ -3,10 +3,12 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from . import broker as broker_mod
-from . import config, logger, risk
-from .llm import Signal
-from .news import NewsEvent
+import broker as broker_mod
+import config
+import logger
+import risk
+from llm import Signal
+from news import NewsEvent
 
 
 def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input") -> dict[str, Any]:
@@ -15,7 +17,7 @@ def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input"
     bro = broker_mod.PaperBroker(equity)
 
     # Late import avoids circulars (llm/broker don't import agent).
-    from .llm import interpret_event
+    from llm import interpret_event
 
     # 1-3. Interpret ---------------------------------------------------------
     signal: Signal = interpret_event(event.text())

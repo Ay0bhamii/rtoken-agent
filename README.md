@@ -25,17 +25,16 @@ Minimal but serious **event-driven paper-trading agent** for tokenized US stocks
 ## Quick start (Windows PowerShell, Python 3.10+ — stdlib only, no pip install needed)
 
 ```powershell
-cd c:\Users\GKL\nimiq-hack-lab
-python -m rtoken_agent.cli --list-samples
-python -m rtoken_agent.cli --reset-state
-python -m rtoken_agent.cli --sample 1     # dovish surprise  → LONG NVDA paper order
-python -m rtoken_agent.cli --sample 2     # chip curbs       → SHORT NVDA paper order
-python -m rtoken_agent.cli --sample 5     # pie contest      → NO_TRADE (flat)
-python -m rtoken_agent.cli --sample 6     # 3rd position     → BLOCKED by risk gate
-python -m rtoken_agent.cli --event "Fed emergency weekend rate cut, dovish surprise"
-python -m rtoken_agent.cli --news --dry-run   # live fetch, no orders
-python -m rtoken_agent.cli --status
-python -m rtoken_agent.test_agent         # 8 smoke tests (risk/interpreter/broker)
+python cli.py --list-samples
+python cli.py --reset-state
+python cli.py --sample 1     # dovish surprise  → LONG NVDA paper order
+python cli.py --sample 2     # chip curbs       → SHORT NVDA paper order
+python cli.py --sample 5     # pie contest      → NO_TRADE (flat)
+python cli.py --sample 6     # 3rd position     → BLOCKED by risk gate
+python cli.py --event "Fed emergency weekend rate cut, dovish surprise"
+python cli.py --news --dry-run   # live fetch, no orders
+python cli.py --status
+python test_agent.py         # 8 smoke tests (risk/interpreter/broker)
 ```
 
 Sample events live in `samples.json` (weekend / after-hours scenarios).

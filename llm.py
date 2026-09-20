@@ -16,7 +16,7 @@ import re
 import urllib.request
 from dataclasses import dataclass
 
-from . import config
+import config
 
 SYSTEM_PROMPT = (
     "You are a cautious event-driven equity analyst for tokenized US stocks (rTokens). "

@@ -16,14 +16,15 @@ import argparse
 import sys
 from pathlib import Path
 
-# Allow BOTH: `python -m rtoken_agent.cli` (repo root) and `python cli.py` (in folder).
-try:
-    from . import agent, broker, config, logger
-    from .news import NewsEvent, fetch_latest_news, load_sample_events
-except ImportError:  # script mode
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from rtoken_agent import agent, broker, config, logger  # noqa: E402
-    from rtoken_agent.news import NewsEvent, fetch_latest_news, load_sample_events  # noqa: E402
+# Flat repo: all modules live side-by-side. Ensure repo root is importable
+# whether run as `python cli.py` or `python -m cli`.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import agent
+import broker
+import config
+import logger
+from news import NewsEvent, fetch_latest_news, load_sample_events
 
 
 def cmd_list_samples() -> None:
@@ -93,9 +94,9 @@ def main(argv: list[str] | None = None) -> int:
             event = NewsEvent(title=text[:160], source="cli-input", body=text)
 
     if a.dry_run:
-        # Interpretation + risk only: temporarily disable order placement.
-        from rtoken_agent import risk as risk_mod
-        from rtoken_agent.llm import interpret_event
+        # Interpretation + risk only: no orders placed.
+        import risk as risk_mod
+        from llm import interpret_event
         sig = interpret_event(event.text())
         print(f"\n[DRY RUN] event: {event.title}\n"
               f"signal: trade={sig.trade} {sig.direction} {sig.ticker} "

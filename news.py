@@ -17,7 +17,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass
 
-from . import config
+import config
 
 
 @dataclass
