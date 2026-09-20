@@ -21,6 +21,12 @@ STOP_LOSS_PCT = 5.0         # every order carries a 5% hard stop
 # The agent may only emit these tickers, so every signal is paper-tradeable.
 ALLOWED_TICKERS = ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOGL", "AMD"]
 
+# ---- Exposure policy ----
+# Default False = one position per ticker (blocks long+short on the same name,
+# which would net to noise while consuming a risk slot). Set True to allow
+# adding, while still blocking same-side doubles.
+ALLOW_SAME_TICKER_ADD = False
+
 # ---- LLM (optional; offline fallback when unset) ----
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")

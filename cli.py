@@ -34,9 +34,28 @@ def cmd_list_samples() -> None:
 
 def cmd_status(capital: float) -> None:
     b = broker.PaperBroker(capital)
+    # day_pnl_pct() re-marks the book, so --status shows the LIVE P&L
+    # (realized + unrealized) instead of a stale 0.00%.
+    pnl = b.day_pnl_pct()
+    halt_txt = "HALTED" if b.is_halted() else f"halt at -{config.DAILY_LOSS_LIMIT_PCT}%"
     print(f"equity: ${capital:,.2f} | open positions: {b.open_position_count()}/"
-          f"{config.MAX_OPEN_POSITIONS} | day P&L: {b.day_pnl_pct():.2f}% "
-          f"(halt at -{config.DAILY_LOSS_LIMIT_PCT}%)")
+          f"{config.MAX_OPEN_POSITIONS} | day P&L: {pnl:.2f}% ({halt_txt})")
+    for p in b.positions_list():
+        mark = b.get_market_price(p["ticker"])
+        upnl = broker.PaperBroker._position_pnl_usd(p, mark)
+        print(f"  - {p['order_id']} {p['direction'].upper()} {p['ticker']} "
+              f"entry ${p['price']} mark ${mark} uPnL ${upnl:,.2f}")
+
+
+def cmd_positions(capital: float) -> None:
+    b = broker.PaperBroker(capital)
+    positions = b.positions_list()
+    if not positions:
+        print("No open positions.")
+        return
+    for p in positions:
+        print(f"{p['order_id']}  {p['direction'].upper():5} {p['ticker']:6} "
+              f"entry ${p['price']} qty {p['qty']} stop→${p['stop_price']}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,6 +68,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--capital", type=float, default=config.DEFAULT_CAPITAL)
     p.add_argument("--list-samples", action="store_true")
     p.add_argument("--status", action="store_true")
+    p.add_argument("--positions", action="store_true", help="list open paper positions")
+    p.add_argument("--mark", nargs=2, metavar=("TICKER", "PRICE"),
+                   help='simulate a market move, e.g. --mark NVDA 110 (re-marks book)')
+    p.add_argument("--close", metavar="ORDER_ID", help="close one paper position")
+    p.add_argument("--close-all", action="store_true", help="close all paper positions")
     p.add_argument("--reset-state", action="store_true")
     a = p.parse_args(argv)
 
@@ -57,6 +81,32 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if a.status:
         cmd_status(a.capital)
+        return 0
+    if a.positions:
+        cmd_positions(a.capital)
+        return 0
+    if a.mark:
+        ticker, price = a.mark[0].upper(), float(a.mark[1])
+        b = broker.PaperBroker(a.capital)
+        b.set_market_price(ticker, price)
+        print(f"Marked {ticker} → ${price:,.2f}. Day P&L now {b.day_pnl_pct():.2f}%"
+              f"{' — HALTED' if b.is_halted() else ''}.")
+        return 0
+    if a.close:
+        b = broker.PaperBroker(a.capital)
+        try:
+            c = b.close_position(a.close)
+        except ValueError as exc:
+            print(exc)
+            return 1
+        print(f"Closed {c['order_id']} {c['direction'].upper()} {c['ticker']} "
+              f"@ ${c['close_price']} → realized ${c['realized_pnl_usd']:+,.2f}. "
+              f"Day P&L now {b.day_pnl_pct():.2f}%.")
+        return 0
+    if a.close_all:
+        b = broker.PaperBroker(a.capital)
+        closed = b.close_all()
+        print(f"Closed {len(closed)} position(s). Day P&L now {b.day_pnl_pct():.2f}%.")
         return 0
     if a.reset_state:
         broker.PaperBroker(a.capital).reset_demo_state()
@@ -71,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Fetched {len(events)} event(s) via {origin}. Running the top story:\n")
         event = events[0]
-    elif a.sample:
+    elif a.sample is not None:  # fix #3: `is not None`, so --sample 0 hits validation
         samples = load_sample_events()
         if not 1 <= a.sample <= len(samples):
             print(f"--sample must be 1..{len(samples)}")

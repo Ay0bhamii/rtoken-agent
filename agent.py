@@ -42,9 +42,17 @@ def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input"
         return record
 
     # 4. Hard risk gate (BEFORE any order) ------------------------------------
-    state = risk.RiskState(equity=equity, day_pnl_pct=bro.day_pnl_pct(),
-                           open_positions=bro.open_position_count(),
-                           halted=bro.is_halted())
+    # refresh_day_pnl() re-marks the book first, so a live -2.5% breach trips
+    # the halt here (fix #1) — day P&L is no longer a stale 0.00%.
+    positions = bro.positions_list()
+    state = risk.RiskState(
+        equity=equity, day_pnl_pct=bro.refresh_day_pnl(),
+        open_positions=len(positions), halted=bro.is_halted(),
+        ticker=signal.ticker or "", direction=signal.direction or "",
+        open_tickers=tuple(p.get("ticker", "") for p in positions),
+        open_exposure=tuple((p.get("ticker", ""), p.get("direction", ""))
+                            for p in positions),
+    )
     verdict = risk.check(float(signal.size_pct or 0), state)
     record["risk"] = {"checked": True, "approved": verdict.approved,
                       "reasons": verdict.reasons,
