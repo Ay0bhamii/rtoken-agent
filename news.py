@@ -1,7 +1,10 @@
 """News layer: bitget-signal skill adapter first, RSS second, samples last.
 
-Step 1 of the core flow: "Fetch latest macro / geopolitical / policy news
-(use bitget-signal skills)". This module honours that priority order:
+Bitget-stack design (hackathon): this agent is built to plug into
+**bitget-signal** (news/macro feed) and **Bitget Agent Hub / Agentic account**
+(execution). The current version uses a clean adapter + fallbacks so the demo
+always runs offline; when real execution is added, the risk gate in risk.py
+sits BEFORE any broker call and can never be bypassed. Priority order:
 
   1. fetch_bitget_signal_news() — hook for the bitget-signal skill.
      If the skill runtime is available it is used; otherwise a clear

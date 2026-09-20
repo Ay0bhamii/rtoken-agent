@@ -12,13 +12,16 @@ SAMPLES_FILE = BASE_DIR / "samples.json"
 DEFAULT_CAPITAL = float(os.getenv("RTOKEN_CAPITAL", "100000.0"))  # USD paper equity
 
 # ---- HARD RISK RULES (do not loosen without review) ----
+# Deliberately conservative for retail capital ($10k-50k): a single weekend gap
+# must never threaten the account. Size cap + daily halt + 2-slot max + per-trade stop.
 MAX_POSITION_PCT = 12.0    # single position notional <= 12% of equity
 DAILY_LOSS_LIMIT_PCT = 2.5  # day P&L <= -2.5%  -> HALT (no new orders)
 MAX_OPEN_POSITIONS = 2      # at most 2 open positions
 STOP_LOSS_PCT = 5.0         # every order carries a 5% hard stop
 
-# ---- Tradeable rToken universe (tokenized US majors, demo mapping) ----
-# The agent may only emit these tickers, so every signal is paper-tradeable.
+# ---- Tradeable rToken universe ----
+# Major US names commonly tokenized as rTokens. The agent may only emit these
+# tickers, so every signal is paper-tradeable in this demo.
 ALLOWED_TICKERS = ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOGL", "AMD"]
 
 # ---- Exposure policy ----

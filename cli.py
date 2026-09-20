@@ -37,7 +37,8 @@ def cmd_status(capital: float) -> None:
     # day_pnl_pct() re-marks the book, so --status shows the LIVE P&L
     # (realized + unrealized) instead of a stale 0.00%.
     pnl = b.day_pnl_pct()
-    halt_txt = "HALTED" if b.is_halted() else f"halt at -{config.DAILY_LOSS_LIMIT_PCT}%"
+    halted = b.is_halted()
+    halt_txt = "HALTED — no new orders today" if halted else f"halt at -{config.DAILY_LOSS_LIMIT_PCT}%"
     print(f"equity: ${capital:,.2f} | open positions: {b.open_position_count()}/"
           f"{config.MAX_OPEN_POSITIONS} | day P&L: {pnl:.2f}% ({halt_txt})")
     for p in b.positions_list():
@@ -45,6 +46,9 @@ def cmd_status(capital: float) -> None:
         upnl = broker.PaperBroker._position_pnl_usd(p, mark)
         print(f"  - {p['order_id']} {p['direction'].upper()} {p['ticker']} "
               f"entry ${p['price']} mark ${mark} uPnL ${upnl:,.2f}")
+    # Tiny summary line for screenshots: positions · P&L · halt state.
+    print(f"SUMMARY: {b.open_position_count()} open · {pnl:+.2f}% day · "
+          f"{'HALTED' if halted else 'TRADING'}")
 
 
 def cmd_positions(capital: float) -> None:

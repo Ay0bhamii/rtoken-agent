@@ -1,10 +1,39 @@
 # rToken Event-Driven Trading Agent (paper-only demo)
 
-Minimal but serious **event-driven paper-trading agent** for tokenized US stocks (rTokens).
+> **Built for Bitget AI Base Camp Hackathon S2 – Agentic Trading / Event-Driven Agent**
+> **Paper trading only – no real funds at risk.**
+> Promotional post: _link coming soon — will be added here once published._
 
-> Safety first: this is **PAPER TRADING ONLY**. No real orders, no real money.
-> Explainability over sophistication: every run logs
-> `timestamp → event → interpretation → decision → risk checks → order → result`.
+## Why this exists (Hackathon Thesis)
+
+US equities sleep on weekends. Tokenized US stocks (rTokens) do not.
+Macro and geopolitical events keep happening while retail traders are offline.
+This agent is the "night shift": it watches weekend/after-hours news, decides
+only when the impact is clear, and trades rTokens under non-negotiable risk limits.
+
+**Target user**: Retail swing traders ($10k–50k) who want event exposure without staying up all night.
+
+## For Judges – Quick Demo (60 seconds)
+
+```bash
+python cli.py --reset-state
+python cli.py --sample 1   # dovish surprise  → LONG NVDA (fills)
+python cli.py --sample 2   # chip curbs       → SHORT NVDA (blocked: already hold NVDA — one position per ticker)
+python cli.py --sample 3   # oil shock        → LONG TSLA (fills: 2nd slot)
+python cli.py --sample 6   # AI capex deal    → BLOCKED by max 2 positions
+python cli.py --sample 5   # pie contest      → NO_TRADE (stays flat on irrelevant news)
+python cli.py --status     # OPEN: 2/2 · day P&L · halt state
+```
+
+Every run produces a full explainable log: event → interpretation → decision → risk checks → order/result.
+
+To see the **daily-loss halt** fire live (the 4th risk rule):
+
+```bash
+python cli.py --mark NVDA 98.25   # adverse shock → day P&L ≈ -1.5%
+python cli.py --mark TSLA 150     # deeper shock  → day P&L ≈ -3.5% — HALTED
+python cli.py --sample 4          # any new signal now refused with HALT reason
+```
 
 ## Core flow (as requested)
 
@@ -28,16 +57,25 @@ Minimal but serious **event-driven paper-trading agent** for tokenized US stocks
 python cli.py --list-samples
 python cli.py --reset-state
 python cli.py --sample 1     # dovish surprise  → LONG NVDA paper order
-python cli.py --sample 2     # chip curbs       → SHORT NVDA paper order
+python cli.py --sample 2     # chip curbs       → SHORT NVDA, but BLOCKED (already hold NVDA)
 python cli.py --sample 5     # pie contest      → NO_TRADE (flat)
-python cli.py --sample 6     # 3rd position     → BLOCKED by risk gate
-python cli.py --event "Fed emergency weekend rate cut, dovish surprise"
-python cli.py --news --dry-run   # live fetch, no orders
-python cli.py --status
-python test_agent.py         # 8 smoke tests (risk/interpreter/broker)
+python cli.py --sample 3     # oil shock        → LONG TSLA (fills 2nd slot)
+python cli.py --sample 6     # AI capex         → BLOCKED by max 2 positions
+python cli.py --mark NVDA 98.25   # adverse shock → live P&L drops, can trip -2.5% HALT
+python cli.py --status       # open positions, live day P&L, halted or not
+python test_agent.py         # 11 tests (risk gate / halt wiring / stops / closes)
 ```
 
 Sample events live in `samples.json` (weekend / after-hours scenarios).
+
+# Demo evidence (for judges)
+
+Screen recording (60–90s, running the Quick Demo above):
+_link coming soon (YouTube unlisted / Loom) — will be added here once uploaded._
+
+Example log excerpts live in `logs/` after any run
+(`agent-YYYY-MM-DD.jsonl` — one JSON record per run:
+event → interpretation → decision → risk → order/result).
 
 ## Files
 
@@ -56,15 +94,18 @@ Sample events live in `samples.json` (weekend / after-hours scenarios).
 | `state/` | Local paper ledger (`orders.json`, `positions.json`, `daily.json`) |
 | `logs/` | Append-only run logs (`agent-YYYY-MM-DD.jsonl`) |
 
-## Plugging in real pieces later
+## Plugging in the real Bitget stack
 
-- **Real news skill**: implement `fetch_bitget_signal_news()` in `news.py`
-  (currently a documented stub — drops in where the RSS fallback is).
-- **Real LLM**: set `OPENAI_API_KEY` (and optionally `OPENAI_BASE_URL`, `OPENAI_MODEL`).
-  Without a key the agent uses a clearly-labelled keyword fallback so the demo
-  always runs offline.
-- **Real Agent Hub execution**: replace `PaperBroker.place_order()` internals;
-  keep calling it *after* `risk.check()` — never bypass the gate.
+- **bitget-signal (news/macro)**: implement `fetch_bitget_signal_news()` in
+  `news.py` (currently a documented stub). Priority is
+  skill → RSS → bundled samples, so the demo always runs.
+- **Real LLM**: set `OPENAI_API_KEY` (and optionally `OPENAI_BASE_URL`,
+  `OPENAI_MODEL`). Without a key the agent uses the clearly-labelled
+  `rules-fallback` engine (see `llm.py`) — logs never confuse it with an LLM call.
+- **Bitget Agent Hub / Agentic account (execution)**: replace
+  `PaperBroker.place_order()` internals; keep calling it *after*
+  `risk.check()` — the gate is deliberately placed before any broker call so
+  it can never be bypassed when real execution is added.
 
 ## Risk rules (enforced in code, not just docs)
 

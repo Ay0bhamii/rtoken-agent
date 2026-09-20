@@ -3,12 +3,11 @@
 Decides: does this event meaningfully affect major US stocks / rTokens this
 weekend or after-hours? If yes → ticker, direction, size %, confidence, reasoning.
 
-- With OPENAI_API_KEY set: calls an OpenAI-compatible chat API via stdlib
-  urllib (no extra dependency), asks for strict JSON.
-- Without a key: transparent RULE-BASED fallback using sector keywords.
-  The fallback always reports engine="rules-fallback" so logs never
-  pretend to be an LLM. It is deliberately conservative: unknown events
-  → NO_TRADE rather than a guess.
+Engine labelling (judges: check the `engine` field in every log record):
+- "llm"              → real LLM call (OPENAI_API_KEY set), strict-JSON answer.
+- "rules-fallback"   → offline keyword map, conservative, unknowns stay flat.
+- "llm-error-fallback" → LLM call failed; defaulted to NO_TRADE for safety.
+Logs never pretend a keyword match was an LLM decision.
 """
 from __future__ import annotations
 import json

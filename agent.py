@@ -1,4 +1,9 @@
-"""Orchestrator: news -> LLM -> risk -> paper broker -> log (steps 1-6)."""
+"""Orchestrator: news -> LLM -> risk -> paper broker -> log (steps 1-6).
+
+Bitget-stack design: news is meant to come from **bitget-signal** and orders
+from a **Bitget Agent Hub / Agentic account** (see news.py / broker.py). The
+risk gate in step 4 sits BEFORE any broker call and can never be bypassed.
+"""
 from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
@@ -86,28 +91,31 @@ def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input"
 def _print_run(r: dict[str, Any]) -> None:
     logger.header("EVENT-DRIVEN rTOKEN AGENT (paper)")
     logger.step(f"timestamp : {r['timestamp']} (UTC) · mode: {r['mode']}")
-    logger.step(f"event     : {r['event']['title']}")
+    logger.header("EVENT")
+    logger.step(f"title     : {r['event']['title']}")
     logger.step(f"source    : {r['event']['source']} · via {r['event']['news_origin']}")
-    logger.header("Interpretation")
+    logger.header("LLM INTERPRETATION")
     logger.step(f"engine    : {r['interpretation']['engine']}")
     logger.step(f"reasoning : {r['interpretation']['reasoning']}")
     logger.step(f"confidence: {r['interpretation']['confidence']}")
     d = r["decision"]
-    logger.header("Decision")
+    logger.header("DECISION")
     if d["trade"]:
         logger.step(f"SIGNAL    : {d['direction'].upper()} {d['ticker']} "
                     f"size={d['requested_size_pct']}% confidence={r['interpretation']['confidence']}")
     else:
         logger.step("SIGNAL    : NO_TRADE (stay flat)")
-    logger.header("Risk checks")
+    logger.header("RISK CHECK")
     if r["risk"].get("checked"):
+        if not r["risk"]["approved"]:
+            print("  >>> RISK REJECTION (this is a successful safety outcome) <<<")
         for reason in r["risk"]["reasons"]:
             logger.step(f"note      : {reason}")
         logger.step(f"approved  : {r['risk']['approved']} · "
                     f"final size={r['risk']['capped_size_pct']}% · stop={r['risk']['stop_pct']}%")
     else:
         logger.step(r["risk"]["reason"])
-    logger.header("Order / Result")
+    logger.header("ORDER / RESULT")
     if r["order"]:
         o = r["order"]
         logger.step(f"order     : {o['order_id']} {o['direction'].upper()} {o['ticker']} "
