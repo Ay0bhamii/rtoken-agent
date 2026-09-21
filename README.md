@@ -1,6 +1,12 @@
 # rToken Event-Driven Trading Agent (paper-only demo)
 
 > **Built for Bitget AI Base Camp Hackathon S2 – Agentic Trading / Event-Driven Agent**
+>
+> An explainable, risk-gated paper-trading agent for Bitget rTokens — every trade
+> decision is logged with its full reasoning chain, every order is capped and
+> stopped by a hard-coded risk gate that cannot be bypassed, and fills use
+> Bitget's public market API where available (`--live`).
+>
 > **Paper trading only – no real funds at risk.**
 > Promotional post: _link coming soon — will be added here once published._
 
@@ -27,13 +33,14 @@ python cli.py --status     # OPEN: 2/2 · day P&L · halt state
 
 Every run produces a full explainable log: event → interpretation → decision → risk checks → order/result.
 
-To see the **daily-loss halt** fire live (the 4th risk rule):
+To see the **daily-loss halt** fire live (the 4th risk rule) — one command:
 
 ```bash
-python cli.py --mark NVDA 98.25   # adverse shock → day P&L ≈ -1.5%
-python cli.py --mark TSLA 150     # deeper shock  → day P&L ≈ -3.5% — HALTED
-python cli.py --sample 4          # any new signal now refused with HALT reason
+python cli.py --simulate-loss 3.0   # books -3% realized → HALTED immediately
+python cli.py --sample 4            # any new signal now refused with HALT reason
 ```
+
+(Or move real marks instead: `--mark NVDA 98.25`, `--mark TSLA 150`.)
 
 ## Core flow (as requested)
 
@@ -62,8 +69,10 @@ python cli.py --sample 5     # pie contest      → NO_TRADE (flat)
 python cli.py --sample 3     # oil shock        → LONG TSLA (fills 2nd slot)
 python cli.py --sample 6     # AI capex         → BLOCKED by max 2 positions
 python cli.py --mark NVDA 98.25   # adverse shock → live P&L drops, can trip -2.5% HALT
+python cli.py --simulate-loss 3.0  # one-command halt demo: books -3% → HALTED
+python cli.py --live --sample 1    # fill from Bitget public quote when available
 python cli.py --status       # open positions, live day P&L, halted or not
-python test_agent.py         # 11 tests (risk gate / halt wiring / stops / closes)
+python test_agent.py         # 12 tests (risk gate / halt wiring / stops / closes / live)
 ```
 
 Sample events live in `samples.json` (weekend / after-hours scenarios).
@@ -106,6 +115,11 @@ event → interpretation → decision → risk → order/result).
   `PaperBroker.place_order()` internals; keep calling it *after*
   `risk.check()` — the gate is deliberately placed before any broker call so
   it can never be bypassed when real execution is added.
+- **Bitget public market data**: `broker.fetch_bitget_price()` pulls no-key spot
+  quotes (`api.bitget.com/api/v2/spot/market/tickers`, trying `R{T}USDT` first —
+  verified live: `RNVDAUSDT` resolves — then `{T}USDT`); pass `--live` to fill
+  from it. Every order is tagged `[bitget-live:SYMBOL]` or `[static-fallback]`
+  so logs never pretend.
 
 ## Risk rules (enforced in code, not just docs)
 

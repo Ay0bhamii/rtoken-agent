@@ -98,6 +98,30 @@ class TestBroker(unittest.TestCase):
         self.assertEqual(b.open_position_count(), 0)
         self.assertGreater(b.day_pnl_pct(), 0)
 
+    def test_simulate_loss_trips_halt(self):
+        # --simulate-loss lever: books realized loss with no positions needed.
+        b = _test_broker()
+        r = b.simulate_loss(3.0)
+        self.assertLess(r["day_pnl_pct"], -config.DAILY_LOSS_LIMIT_PCT)
+        self.assertTrue(r["halted"] and b.is_halted())
+
+    def test_live_fill_tags_source(self):
+        # resolve_fill_price must always tag honestly; offline it falls back.
+        from unittest import mock
+        b = _test_broker()
+        b.live = True
+        with mock.patch("broker.fetch_bitget_price", return_value=(250.0, "NVDAUSDT")):
+            price, source = b.resolve_fill_price("NVDA")
+            self.assertEqual((price, source), (250.0, "bitget-live:NVDAUSDT"))
+            o = b.place_order("NVDA", "long", 5.0)
+            self.assertEqual(o.price_source, "bitget-live:NVDAUSDT")
+        b2 = _test_broker()  # live requested but API dead → honest fallback
+        b2.live = True
+        with mock.patch("broker.fetch_bitget_price", return_value=(None, "")):
+            price, source = b2.resolve_fill_price("NVDA")
+            self.assertEqual(source, "static-fallback")
+            self.assertEqual(price, REF_PRICES["NVDA"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

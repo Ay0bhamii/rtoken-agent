@@ -16,10 +16,11 @@ from llm import Signal
 from news import NewsEvent
 
 
-def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input") -> dict[str, Any]:
+def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input",
+            live: bool = False) -> dict[str, Any]:
     """Run the FULL flow for one event. Returns the log record (also persisted)."""
     ts = logger.utc_now_iso()
-    bro = broker_mod.PaperBroker(equity)
+    bro = broker_mod.PaperBroker(equity, live=live)
 
     # Late import avoids circulars (llm/broker don't import agent).
     from llm import interpret_event
@@ -80,8 +81,8 @@ def run_event(event: NewsEvent, equity: float, news_origin: str = "manual input"
     record["order"] = asdict(order)
     record["result"] = (
         f"PAPER {order.direction.upper()} {order.ticker} {order.size_pct}% "
-        f"(≈${order.notional_usd:,.2f} @ ${order.price}) | stop {order.stop_pct}% "
-        f"→ {order.stop_price} | id {order.order_id} | {order.status}"
+        f"(≈${order.notional_usd:,.2f} @ ${order.price} [{order.price_source}]) | "
+        f"stop {order.stop_pct}% → {order.stop_price} | id {order.order_id} | {order.status}"
     )
     _print_run(record)
     logger.log_run(record)
@@ -119,6 +120,7 @@ def _print_run(r: dict[str, Any]) -> None:
     if r["order"]:
         o = r["order"]
         logger.step(f"order     : {o['order_id']} {o['direction'].upper()} {o['ticker']} "
-                    f"${o['notional_usd']:,.2f} @ ${o['price']} stop→${o['stop_price']}")
+                    f"${o['notional_usd']:,.2f} @ ${o['price']} [{o.get('price_source', 'static-fallback')}] "
+                    f"stop→${o['stop_price']}")
     logger.step(f"result    : {r['result']}")
     logger.divider()

@@ -75,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--positions", action="store_true", help="list open paper positions")
     p.add_argument("--mark", nargs=2, metavar=("TICKER", "PRICE"),
                    help='simulate a market move, e.g. --mark NVDA 110 (re-marks book)')
+    p.add_argument("--simulate-loss", type=float, metavar="PCT",
+                   help="demo lever: book a synthetic realized day loss, e.g. "
+                        "--simulate-loss 3.0 trips the -2.5%% halt live")
+    p.add_argument("--live", action="store_true",
+                   help="fill new orders from Bitget public spot quotes when "
+                        "available (else static fallback, tagged in the log)")
     p.add_argument("--close", metavar="ORDER_ID", help="close one paper position")
     p.add_argument("--close-all", action="store_true", help="close all paper positions")
     p.add_argument("--reset-state", action="store_true")
@@ -111,6 +117,17 @@ def main(argv: list[str] | None = None) -> int:
         b = broker.PaperBroker(a.capital)
         closed = b.close_all()
         print(f"Closed {len(closed)} position(s). Day P&L now {b.day_pnl_pct():.2f}%.")
+        return 0
+    if a.simulate_loss is not None:
+        b = broker.PaperBroker(a.capital)
+        try:
+            r = b.simulate_loss(a.simulate_loss)
+        except ValueError as exc:
+            print(exc)
+            return 1
+        print(f"Simulated day loss: ${r['simulated_loss_usd']:,.2f} → "
+              f"day P&L {r['day_pnl_pct']:.2f}%"
+              f"{' — HALTED (no new orders today)' if r['halted'] else ''}.")
         return 0
     if a.reset_state:
         broker.PaperBroker(a.capital).reset_demo_state()
@@ -169,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
                         "decision": {"trade": sig.trade}, "result": "dry-run, no order"})
         return 0
 
-    record = agent.run_event(event, a.capital, news_origin=origin)
+    record = agent.run_event(event, a.capital, news_origin=origin, live=a.live)
     log_path = config.LOG_DIR / "*.jsonl"
     print(f"\nFull record appended to {log_path} (JSONL).")
     print("modes: PAPER ONLY — no real orders exist in this demo.")
