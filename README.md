@@ -1,4 +1,4 @@
-# rToken Event-Driven Trading Agent (paper-only demo)
+# 🌙 NightShift Agent — Event-Driven Trading for 7×24 rTokens
 
 > **Built for Bitget AI Base Camp Hackathon S2 – Agentic Trading / Event-Driven Agent**
 >
@@ -10,37 +10,39 @@
 > **Paper trading only – no real funds at risk.**
 > Promotional post: _link coming soon — will be added here once published._
 
-## Why this exists (Hackathon Thesis)
+## Thesis
 
-US equities sleep on weekends. Tokenized US stocks (rTokens) do not.
-Macro and geopolitical events keep happening while retail traders are offline.
-This agent is the "night shift": it watches weekend/after-hours news, decides
-only when the impact is clear, and trades rTokens under non-negotiable risk limits.
+US equities sleep on weekends. Tokenized US stocks (rTokens) do not — and neither
+do macro shocks, wars, or policy surprises. Retail traders go offline; risk does not.
+**NightShift Agent is the night shift**: it watches weekend/after-hours news, acts
+only when the impact on major US names is clear, and trades rTokens under
+non-negotiable risk limits. When in doubt, it stays flat — and logs exactly why.
 
-**Target user**: Retail swing traders ($10k–50k) who want event exposure without staying up all night.
+**Target user**: retail swing traders ($10k–$50k) who want weekend event exposure
+without staying up all night watching headlines.
 
 ## For Judges – Quick Demo (60 seconds)
 
 ```bash
 python cli.py --reset-state
 python cli.py --sample 1   # dovish surprise  → LONG NVDA (fills)
-python cli.py --sample 2   # chip curbs       → SHORT NVDA (blocked: already hold NVDA — one position per ticker)
-python cli.py --sample 3   # oil shock        → LONG TSLA (fills: 2nd slot)
-python cli.py --sample 6   # AI capex deal    → BLOCKED by max 2 positions
 python cli.py --sample 5   # pie contest      → NO_TRADE (stays flat on irrelevant news)
-python cli.py --status     # OPEN: 2/2 · day P&L · halt state
+python cli.py --sample 3   # oil shock        → LONG TSLA (fills 2nd slot)
+python cli.py --sample 6   # AI capex deal    → BLOCKED by max 2 positions
+python cli.py --status     # SUMMARY: 2 open · P&L · TRADING/HALTED
 ```
 
-Every run produces a full explainable log: event → interpretation → decision → risk checks → order/result.
+Every run prints the full explainable flow
+(event → interpretation → decision → risk checks → order/result)
+and appends it as one JSON record to `logs/agent-YYYY-MM-DD.jsonl`.
 
-To see the **daily-loss halt** fire live (the 4th risk rule) — one command:
+Safety rails on demand:
 
 ```bash
 python cli.py --simulate-loss 3.0   # books -3% realized → HALTED immediately
 python cli.py --sample 4            # any new signal now refused with HALT reason
+python cli.py --live --sample 1     # fill from Bitget public quote (RNVDAUSDT)
 ```
-
-(Or move real marks instead: `--mark NVDA 98.25`, `--mark TSLA 150`.)
 
 ## Core flow (as requested)
 
