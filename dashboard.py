@@ -158,14 +158,15 @@ class H(BaseHTTPRequestHandler):
 
 def main():
     import argparse
+    import os
     global CAPITAL
     ap = argparse.ArgumentParser(description="NightShift live dashboard (stdlib only)")
-    ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--port", type=int, default=int(os.getenv("PORT", "8080")))
     ap.add_argument("--capital", type=float, default=config.DEFAULT_CAPITAL)
     ap.add_argument("--open", action="store_true")
     a = ap.parse_args()
     CAPITAL = a.capital
-    srv = ThreadingHTTPServer(("127.0.0.1", a.port), H)
+    srv = ThreadingHTTPServer(("0.0.0.0", a.port), H)
     print("NightShift dashboard -> http://localhost:%d (Ctrl+C, paper only)" % a.port)
     if a.open:
         threading.Timer(0.6, lambda: webbrowser.open("http://localhost:%d" % a.port)).start()

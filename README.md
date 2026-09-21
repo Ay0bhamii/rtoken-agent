@@ -35,6 +35,30 @@ REJECTION) / PAPER LEDGER (positions with entry→mark, uPnL) / RUN LOG
 (order tagged `[bitget-live:SYMBOL]`). Everything is the real modules —
 the dashboard is a window on `agent.run_event()`, not a mock.
 
+## Deploying (Render free tier — cold starts)
+
+The dashboard deploys as-is: Render start command is just `python dashboard.py`.
+The server binds `0.0.0.0:$PORT` (Render sets `PORT`; override locally with
+`--port`). Note: on Render the paper ledger is ephemeral per instance, so run
+your demo within one warm session (or upgrade the disk) — fine for a demo.
+
+Free instances sleep and take ~30–60s to wake. **Before you present**, run this
+waiter — it loops until `/api/status` actually answers 200:
+
+```bash
+until curl -sf https://YOUR-APP.onrender.com/api/status > /dev/null; do echo "waking up..."; sleep 3; done; echo "LIVE ✅"
+```
+
+Want more than "the server responds" — proof the trading pipeline itself works
+post-deploy? This waiter only succeeds once a sample run returns a real trade
+decision (`tr` field = a signal, not just a 200):
+
+```bash
+until curl -sf -X POST https://YOUR-APP.onrender.com/api/run -H "Content-Type: application/json" -d '{"sample":1,"live":false}' | grep -q '"tr"'; do echo "waking up..."; sleep 3; done; echo "LIVE — sample 1 fired a real signal ✅"
+```
+
+Swap in your real `.onrender.com` URL once Render assigns it.
+
 ## For Judges – Quick Demo (60 seconds)
 
 ```bash
