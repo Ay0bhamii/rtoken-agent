@@ -1,0 +1,26 @@
+<script>
+var $=function(id){return document.getElementById(id);};
+function api(p,m,b){return fetch(p,{method:m||'GET',headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json();});}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ref(){api('/api/status').then(function(s){
+var h='<span class=bdg>'+(s.live?'BITGET-LIVE':'static fallback')+'</span> <span class=bdg>engine: '+esc(s.engine)+'</span> <span class=bdg>'+(s.halted?'HALTED':'TRADING')+'</span> <span class=bdg>day '+s.pnl+'%</span> <span class=bdg>open '+s.n+'/'+s.mx+'</span>';
+$('bg').innerHTML=h;
+$('st').innerHTML='equity <b>$'+Number(s.eq).toLocaleString()+'</b><br>open <b>'+s.n+'/'+s.mx+'</b><br>day P&L <b class='+(s.pnl<0?'bd':'ok')+'>'+s.pnl+'%</b><br>'+(s.halted?'<b class=bd>HALTED - no new orders</b>':'TRADING');
+$('ev').innerHTML='<b>'+esc(s.ev)+'</b><div class=dm>'+esc(s.evorg)+'</div>';
+if(s.pos.length){var o='<table><tr><th>id</th><th>side</th><th>entry-mark</th><th>uPnL</th></tr>';for(var i=0;i<s.pos.length;i++){var p=s.pos[i];o+='<tr><td class=mn>'+p.id.slice(0,12)+'</td><td>'+p.dir+' '+esc(p.tk)+'</td><td class=mn>$'+p.en+' - $'+p.mk+'</td><td class=mn '+(p.u<0?'bd':'ok')+'>'+(p.u<0?'-$':'$')+Math.abs(p.u).toFixed(2)+'</td></tr>';}$('ld').innerHTML=o+'</table>';}
+else{$('ld').innerHTML='<span class=dm>No open positions. Press button 1.</span>';}
+if(s.log.length){var g='';for(var j=0;j<s.log.length;j++){g+='<div>'+esc(s.log[j])+'</div>';}$('rl').innerHTML=g;}
+else{$('rl').innerHTML='<span class=dm>No runs yet.</span>';}
+$('lv').checked=!!s.live;}).catch(function(){});}
+function S(n){api('/api/run','POST',{sample:n,live:$('lv').checked}).then(function(r){sh(r);ref();});}
+function N(){api('/api/run','POST',{news:true,live:$('lv').checked}).then(function(r){sh(r);ref();});}
+function L(){api('/api/sim','POST',{pct:3}).then(function(){ref();alert('-3% booked. The book is HALTED now - press button 4 and watch the gate refuse it.');});}
+function R(){$('br').textContent='Run a sample to see the agent think.';$('rk').textContent='-';api('/api/reset','POST',{}).then(ref);}
+function C(){var t=$('ce').value.trim();if(!t){alert('Paste a headline first.');return;}api('/api/run','POST',{event:t,live:$('lv').checked}).then(function(r){sh(r);ref();});}
+function sh(r){if(r.err){alert(r.err);return;}
+$('br').innerHTML='<span class=bdg>'+esc(r.engine)+'</span><div style="margin-top:8px">'+esc(r.why)+'</div><div class=dm style="margin-top:6px">confidence '+r.cf+' - signal: <b>'+(r.tr?esc(r.dir+' '+r.tk+' '+r.sz+'%'):'NO_TRADE (stay flat)')+'</b></div>';
+if(r.ck){var e='';if(!r.ap){e+='<div class=bd><b>RISK REJECTION</b> - a rejected trade is a successful safety outcome.</div>';}else{e+='<div class=ok><b>APPROVED</b></div>';}
+$('rk').innerHTML=e+'<div class=mn style="margin-top:6px">'+r.rs.map(function(x){return esc(x);}).join('<br>')+'<br>final size '+r.fs+'% - stop '+r.sp+'%</div>';}
+else{$('rk').innerHTML='<span class=dm>No trade signal - risk gate not needed.</span>';}}
+setInterval(ref,4000);ref();
+</script></body></html>

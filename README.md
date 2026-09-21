@@ -21,6 +21,20 @@ non-negotiable risk limits. When in doubt, it stays flat — and logs exactly wh
 **Target user**: retail swing traders ($10k–$50k) who want weekend event exposure
 without staying up all night watching headlines.
 
+## Web dashboard (the way to demo this)
+
+```bash
+python dashboard.py --open     # → http://localhost:8080
+```
+
+One page, real pipeline: STATUS / LATEST EVENT / **AGENT BRAIN** (LLM
+interpretation with engine badge) / **RISK GATE** (green APPROVED, red RISK
+REJECTION) / PAPER LEDGER (positions with entry→mark, uPnL) / RUN LOG
+(last 8 runs). Buttons run the exact judge sequence, plus "-3% → HALT" and
+"Live news". The `live Bitget quotes` checkbox fills from `R{T}USDT` quotes
+(order tagged `[bitget-live:SYMBOL]`). Everything is the real modules —
+the dashboard is a window on `agent.run_event()`, not a mock.
+
 ## For Judges – Quick Demo (60 seconds)
 
 ```bash
@@ -93,6 +107,7 @@ event → interpretation → decision → risk → order/result).
 | File | Purpose |
 |---|---|
 | `cli.py` | Runnable demo CLI (input or load sample event, see full flow) |
+| `dashboard.py` + `dash_top.html`/`dash_js.html` | **Live web dashboard** (stdlib `http.server`, auto-refresh, one-click demo buttons) |
 | `agent.py` | Orchestrator: news → LLM → risk → broker → log |
 | `news.py` | News adapters: `bitget-signal` skill hook + RSS + samples |
 | `llm.py` | LLM interpreter (OpenAI-compatible via stdlib `urllib`, else transparent rule fallback) |

@@ -1,0 +1,47 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>NightShift Agent - live dashboard</title><style>
+body{margin:0;background:#0b0e15;color:#dfe6f5;font:15px/1.5 system-ui,sans-serif}
+.w{max-width:1060px;margin:0 auto;padding:22px 14px 60px}
+.hero{border:1px solid #232c42;border-radius:14px;padding:20px;background:#131824}
+.hero h1{margin:0 0 6px;font-size:28px}
+.bdg{display:inline-block;font-size:12px;padding:2px 10px;border:1px solid #232c42;border-radius:99px;color:#8b94ad;margin:2px 4px 2px 0}
+.gr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.cd{background:#131824;border:1px solid #232c42;border-radius:12px;padding:14px 16px}
+.cd h2{margin:0 0 8px;font-size:12px;letter-spacing:.1em;color:#8b94ad}
+.ok{color:#3ddc84}.bd{color:#ff6b6b}.dm{color:#8b94ad}.mn{font-family:Consolas,monospace}
+button{cursor:pointer;border:1px solid #232c42;background:#1a2236;color:#dfe6f5;border-radius:9px;padding:9px 12px;font-size:14px;margin:2px}
+button:hover{border-color:#6cb4ff}
+input[type=text]{background:#0e1422;color:#dfe6f5;border:1px solid #232c42;border-radius:9px;padding:9px;font-size:14px}
+select{background:#0e1422;color:#dfe6f5;border:1px solid #232c42;border-radius:9px;padding:9px;font-size:14px}
+.lg{max-height:260px;overflow:auto;background:#0a0e17;border:1px solid #232c42;border-radius:8px;padding:8px 10px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:5px 7px;border-bottom:1px solid #232c42}
+th{color:#8b94ad}
+.ftr{margin-top:14px;color:#8b94ad;font-size:12px}
+</style></head><body><div class='w'><div class='hero'><h1>NightShift Agent</h1>
+<div class='dm'>Event-driven paper trading for 7x24 rTokens. Every decision logged; every order gated. <b>Paper only.</b></div>
+<div id='bg'><span class='bdg'>connecting...</span></div>
+<div style='margin-top:10px'>
+<button onclick='S(1)'>1 Dovish surprise &gt; LONG NVDA</button>
+<button onclick='S(5)'>2 Pie contest &gt; FLAT</button>
+<button onclick='S(3)'>3 Oil shock &gt; LONG TSLA</button>
+<button onclick='S(6)'>4 3rd trade &gt; BLOCKED</button>
+<button onclick='L()'>5 -3pct &gt; HALT</button>
+<button onclick='N()'>6 Live news</button>
+<button onclick='R()'>Reset</button></div>
+<div style='margin-top:8px'>
+<select id='ss'><option value='1'>sample 1</option><option value='2'>sample 2</option><option value='3'>sample 3</option><option value='4'>sample 4</option><option value='5'>sample 5</option><option value='6'>sample 6</option></select>
+<button onclick='S(document.getElementById("ss").value)'>Run sample</button>
+<input type='text' id='ce' size='30' placeholder='Or paste your own headline...'>
+<button onclick='C()'>Run headline</button>
+<label class='dm'><input type='checkbox' id='lv'> live Bitget quotes</label>
+</div></div><div class='gr'>
+<div class='cd'><h2>STATUS</h2><div id='st' class='mn'>loading...</div></div>
+<div class='cd'><h2>LATEST EVENT</h2><div id='ev'>loading...</div></div>
+<div class='cd'><h2>AGENT BRAIN (LLM interpretation)</h2><div id='br'>Run a sample to see the agent think.</div></div>
+<div class='cd'><h2>RISK GATE (before any order)</h2><div id='rk'>-</div></div>
+<div class='cd'><h2>PAPER LEDGER (open positions)</h2><div id='ld'>loading...</div></div>
+<div class='cd'><h2>RUN LOG (last 8, full JSONL on disk)</h2><div class='lg' id='rl'>loading...</div></div>
+</div><div class='ftr'>NightShift Agent - Bitget AI Base Camp Hackathon S2 - paper trading only.
+A rejected trade is a successful safety outcome.</div></div>

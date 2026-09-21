@@ -1,4 +1,9 @@
-"""Explainable logging: human console lines + machine JSONL record per run."""
+"""Explainable logging: human console lines + machine JSONL record per run.
+
+Console output is ASCII-safe (a redirected Windows console uses cp1252 and
+crashes on arrows/emoji), so step()/header()/divider() transliterate common
+non-ASCII chars to ASCII equivalents before printing.
+"""
 from __future__ import annotations
 import datetime as dt
 import json
@@ -6,6 +11,18 @@ from pathlib import Path
 from typing import Any
 
 import config
+
+_REPLACEMENTS = {
+    "→": "->", "←": "<-", "≈": "~", "·": "-", "—": "-", "–": "-",
+    "🌙": "moon", "⛔": "x", "✅": "ok", "❌": "x", "≥": ">=", "≤": "<=",
+}
+
+
+def _ascii(msg: str) -> str:
+    """Make a string safe for any console encoding (cp1252 etc.)."""
+    for k, v in _REPLACEMENTS.items():
+        msg = msg.replace(k, v)
+    return msg.encode("ascii", "replace").decode("ascii")
 
 
 def utc_now_iso() -> str:
@@ -27,11 +44,11 @@ def log_run(record: dict[str, Any]) -> Path:
 
 
 def step(msg: str) -> None:
-    print(f"  {msg}")
+    print(f"  {_ascii(str(msg))}")
 
 
 def header(title: str) -> None:
-    print(f"\n=== {title} ===")
+    print(f"\n=== {_ascii(title)} ===")
 
 
 def divider() -> None:
